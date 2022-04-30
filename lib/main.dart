@@ -46,12 +46,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void test() async {
-    List<User>? users = [];
+    // List<User>? users = [];
     // users = User().where(k: 'name', v: 'wambua').get() as List<User>;
-    Builder buider = Builder(tableName: 'users');
-    var a = await buider.where(k: 'name', v: 'wambua').get();
-    print(a);
+    // Builder buider = Builder(tableName: 'users');
+    // var a = await buider.where(k: 'name', v: 'wambua').get();
+    // print(a);
     // buider.add(User(id: 1, name: 'wambua'));
+    Schema.create('users', [
+      Field('id').string().primaryKey(),
+      Field('firstname').string().nullable(),
+      Field('lastname').string().nullable(),
+      Field('password').string().nullable(),
+      Field('token').string().nullable(),
+    ]);
   }
 
   @override
@@ -234,3 +241,82 @@ class User {
 Map<String, dynamic> userMap = {"id": 1, "name": "wambua"};
 
 enum Order { ASC, DESC }
+
+class Field {
+  Field(this.name);
+  String name;
+  String _type = '';
+  bool _isPrimaryKey = false;
+  bool _canBeNull = false;
+  bool _isUnique = false;
+  var _defaultValue;
+
+  Field string() {
+    _type = 'varchar(255)';
+    return this;
+  }
+
+  Field decimal() {
+    _type = 'decimal';
+    return this;
+  }
+
+  Field boolean() {
+    _type = 'BOOLEAN';
+    return this;
+  }
+
+  Field int() {
+    _type = 'INTEGER';
+    return this;
+  }
+
+  Field nullable() {
+    _canBeNull = true;
+    return this;
+  }
+
+  Field primaryKey() {
+    _isPrimaryKey = true;
+    return this;
+  }
+
+  Field unique() {
+    _isUnique = true;
+    return this;
+  }
+
+  Field setDefaultValue(var value) {
+    _defaultValue = value;
+    return this;
+  }
+
+  String build() {
+    return '$name $_type ' +
+        (_isPrimaryKey ? "PRIMARY KEY " : " ") +
+        (_isUnique ? " UNIQUE " : "") +
+        (_canBeNull ? "" : " NOT NULL ") +
+        (_defaultValue != null ? "DEFAULT " + _defaultValue : "") +
+        "";
+  }
+}
+
+class Schema {
+  static Future<void> create(String tableName, List<Field> fields) async {
+    // List<String> fieldStrings = [];
+    String createTableStatement = 'ALTER TABLE ' + tableName + '(';
+
+    for (var field in fields) {
+      // fieldStrings.add(field.build());
+
+      createTableStatement = createTableStatement +
+          " " +
+          field.build() +
+          (field == fields.last ? "" : ",");
+    }
+    createTableStatement = createTableStatement + ")";
+    Database database = await DatabaseHelper.instance.database;
+    // database.execute("DROP TABLE IF EXISTS " + tableName);
+    database.execute(createTableStatement);
+  }
+}
