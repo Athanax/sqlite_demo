@@ -45,9 +45,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void test() {
+  void test() async {
     List<User>? users = [];
-    users = User().where(k: 'name', v: 'wambua').get() as List<User>;
+    // users = User().where(k: 'name', v: 'wambua').get() as List<User>;
+    Builder buider = Builder(tableName: 'users');
+    var a = await buider.where(k: 'name', v: 'wambua').get();
+    print(a);
+    // buider.add(User(id: 1, name: 'wambua'));
   }
 
   @override
@@ -116,7 +120,7 @@ class DatabaseHelper {
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE groceries(
+      CREATE TABLE users(
           id INTEGER PRIMARY KEY,
           name TEXT
       )
@@ -152,17 +156,81 @@ class DatabaseHelper {
 
 class Builder {
   //
+  String tableName;
+  String? orderByStatement = null;
+  List<Set<dynamic>> whereQuery = [];
+
+  Builder({required this.tableName});
+
+  Map<String, dynamic> find(int id) {
+    return {};
+  }
+
   Builder where({required String k, String op = '=', required dynamic v}) {
+    whereQuery.add({k, op, v});
+    print(whereQuery);
     return this;
   }
 
-  List<Builder> get() {
-    return [];
+  Builder orderBy({required String column, required Order order}) {
+    orderByStatement =
+        "ORDER BY $column " + ((order == Order.ASC) ? "ASC" : "DESC");
+
+    return this;
+  }
+
+  Future<List<Map<String, Object?>>> _constructSqlStatement() async {
+    List whereArgs = [];
+    String whereString = '';
+    Database database = await DatabaseHelper.instance.database;
+    for (Set needle in whereQuery) {
+      whereString =
+          whereString + needle.elementAt(0) + " " + needle.elementAt(1) + " ? ";
+      whereArgs.add(needle.elementAt(2));
+    }
+    var res = await database.query('users',
+        where: whereString, whereArgs: whereArgs, orderBy: orderByStatement);
+    return res;
+  }
+
+  Future<int> add(User user) async {
+    Database database = await DatabaseHelper.instance.database;
+    return await database.insert('users', user.toJson());
+  }
+
+  Map<String, dynamic> first() {
+    return userMap;
+  }
+
+  Map<String, dynamic> last() {
+    return userMap;
+  }
+
+  Future<List<Map<String, Object?>>> get() async {
+    var b = await _constructSqlStatement();
+    return b;
   }
 }
 
-class User extends Builder {
-  int? id;
+class User {
+  late int id;
   String? name;
-  User({this.id, this.name});
+
+  User({required this.id, this.name});
+
+  User.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    return data;
+  }
 }
+
+Map<String, dynamic> userMap = {"id": 1, "name": "wambua"};
+
+enum Order { ASC, DESC }
