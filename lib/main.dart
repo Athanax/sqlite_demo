@@ -53,11 +53,11 @@ class _MyHomePageState extends State<MyHomePage> {
     // print(a);
     // buider.add(User(id: 1, name: 'wambua'));
     Schema.create('users', [
-      Field('id').string().primaryKey(),
-      Field('firstname').string().nullable(),
-      Field('lastname').string().nullable(),
-      Field('password').string().nullable(),
-      Field('token').string().nullable(),
+      Field('id').numberic().primaryKey(),
+      Field('firstname').text().nullable(),
+      Field('lastname').text().nullable(),
+      Field('password').text().nullable(),
+      Field('token').text().nullable(),
     ]);
   }
 
@@ -251,13 +251,23 @@ class Field {
   bool _isUnique = false;
   var _defaultValue;
 
-  Field string() {
-    _type = 'varchar(255)';
+  Field text() {
+    _type = 'TEXT';
     return this;
   }
 
-  Field decimal() {
-    _type = 'decimal';
+  Field integer() {
+    _type = 'INTEGER';
+    return this;
+  }
+
+  Field numberic() {
+    _type = 'NUMERIC';
+    return this;
+  }
+
+  Field real() {
+    _type = 'REAL';
     return this;
   }
 
@@ -266,8 +276,8 @@ class Field {
     return this;
   }
 
-  Field int() {
-    _type = 'INTEGER';
+  Field blob() {
+    _type = 'BLOB';
     return this;
   }
 
